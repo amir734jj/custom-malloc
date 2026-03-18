@@ -1,7 +1,8 @@
 CC      = gcc
 CFLAGS  = -Wall -Wextra -Wpedantic -g -O0 -fPIC
 
-LIB     = libcustom_malloc.so  # .so means shared object (dynamic library on Unix/Linux)
+# .so means shared object (dynamic library on Unix/Linux)
+LIB     = libcustom_malloc.so
 SRC     = custom_malloc.c
 
 .PHONY: all run clean
