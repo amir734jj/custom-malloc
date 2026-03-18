@@ -31,7 +31,6 @@ public class HeapTests : IDisposable
         return (used, free);
     }
 
-
     [Fact]
     public void Malloc_ReturnsNonNull()
     {
@@ -204,18 +203,18 @@ public class HeapTests : IDisposable
     }
 
     [Fact]
-    public void MultiThreaded_Alloc_Free_Safe()
+    public async Task MultiThreaded_Alloc_Free_Safe()
     {
         const int threadCount = 8;
         const int allocsPerThread = 100;
         var ptrs = new IntPtr[threadCount][];
         Exception? threadError = null;
 
-        var threads = new Thread[threadCount];
+        var tasks = new Task[threadCount];
         for (var t = 0; t < threadCount; t++)
         {
             var tid = t;
-            threads[t] = new Thread(() =>
+            tasks[t] = Task.Run(() =>
             {
                 try
                 {
@@ -236,8 +235,8 @@ public class HeapTests : IDisposable
                 }
             });
         }
-        foreach (var thread in threads) thread.Start();
-        foreach (var thread in threads) thread.Join();
+        
+        await Task.WhenAll(tasks);
         Assert.Null(threadError);
         var (used, free) = Stats();
         Assert.Equal((nuint)0, used);
