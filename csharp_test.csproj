@@ -16,7 +16,6 @@
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.3.0" />
   </ItemGroup>
 
-  <!-- Copy the native library next to the output binary so the runtime finds it -->
   <ItemGroup>
     <None Include="libcustom_malloc.so">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
