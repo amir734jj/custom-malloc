@@ -1,5 +1,5 @@
 #include "custom_malloc.h"
-#include <pthread.h>
+#include <pthread.h> /* pthread_mutex_lock     */
 #include <stdbool.h> /* bool, true, false      */
 #include <stdint.h>  /* SIZE_MAX               */
 #include <string.h>  /* memset, memcpy         */
