@@ -1,6 +1,5 @@
 using Xunit;
 using Xunit.Abstractions;
-using System.Threading;
 
 namespace csharp_test;
 
