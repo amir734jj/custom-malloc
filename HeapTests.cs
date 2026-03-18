@@ -1,5 +1,6 @@
 using Xunit;
 using Xunit.Abstractions;
+using System.Threading;
 
 namespace csharp_test;
 
@@ -201,6 +202,47 @@ public class HeapTests : IDisposable
         }
 
         Heap.Free(p2);
+    }
+
+    [Fact]
+    public void MultiThreaded_Alloc_Free_Safe()
+    {
+        const int threadCount = 8;
+        const int allocsPerThread = 100;
+        var ptrs = new IntPtr[threadCount][];
+        Exception? threadError = null;
+
+        var threads = new Thread[threadCount];
+        for (var t = 0; t < threadCount; t++)
+        {
+            var tid = t;
+            threads[t] = new Thread(() =>
+            {
+                try
+                {
+                    ptrs[tid] = new IntPtr[allocsPerThread];
+                    for (var i = 0; i < allocsPerThread; i++)
+                    {
+                        ptrs[tid][i] = Heap.Malloc(32);
+                        Assert.NotEqual(IntPtr.Zero, ptrs[tid][i]);
+                    }
+                    for (var i = 0; i < allocsPerThread; i++)
+                    {
+                        Heap.Free(ptrs[tid][i]);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    threadError = ex;
+                }
+            });
+        }
+        foreach (var thread in threads) thread.Start();
+        foreach (var thread in threads) thread.Join();
+        Assert.Null(threadError);
+        var (used, free) = Stats();
+        Assert.Equal((nuint)0, used);
+        Assert.Equal((nuint)0, free);
     }
 
     public void Dispose()

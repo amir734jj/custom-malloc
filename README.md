@@ -4,7 +4,7 @@ A minimal `malloc`/`free`/`calloc`/`realloc` implementation in C, using an impli
 
 ## Block Layout
 
-```c
+```
 /*
  *  Memory layout of one allocation unit:
  *
@@ -22,6 +22,7 @@ A minimal `malloc`/`free`/`calloc`/`realloc` implementation in C, using an impli
 - `sbrk()` heap management
 - C# P/Invoke bindings
 - xUnit test suite
+- Thread safe
 
 ## Usage
 See `custom_malloc.h` for API.

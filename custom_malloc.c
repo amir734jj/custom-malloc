@@ -1,9 +1,11 @@
 #include "custom_malloc.h"
-
+#include <pthread.h>
 #include <stdbool.h> /* bool, true, false      */
 #include <stdint.h>  /* SIZE_MAX               */
 #include <string.h>  /* memset, memcpy         */
-#include <unistd.h>  /* sbrk                  */
+#include <unistd.h>  /* sbrk                   */
+
+static pthread_mutex_t heap_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 #define ALIGN (sizeof(void *))
 #define ALIGN_UP(n) (((n) + ALIGN - 1) & ~(ALIGN - 1))
@@ -77,7 +79,9 @@ static void coalesce(block_t *b) {
 }
 
 void *custom_malloc(size_t size) {
+  pthread_mutex_lock(&heap_mutex);
   if (size == 0) {
+    pthread_mutex_unlock(&heap_mutex);
     return NULL;
   }
 
@@ -90,15 +94,20 @@ void *custom_malloc(size_t size) {
   } else {
     b = extend_heap(size);
     if (!b) {
+      pthread_mutex_unlock(&heap_mutex);
       return NULL;
     }
   }
 
-  return (char *)b + HEADER_SIZE;
+  void *result = (char *)b + HEADER_SIZE;
+  pthread_mutex_unlock(&heap_mutex);
+  return result;
 }
 
 void custom_free(void *ptr) {
+  pthread_mutex_lock(&heap_mutex);
   if (!ptr) {
+    pthread_mutex_unlock(&heap_mutex);
     return;
   }
 
@@ -126,6 +135,7 @@ void custom_free(void *ptr) {
       heap_head = NULL;
     }
   }
+  pthread_mutex_unlock(&heap_mutex);
 }
 
 void *custom_calloc(size_t nmemb, size_t size) {
@@ -182,12 +192,15 @@ void *custom_realloc(void *ptr, size_t size) {
 }
 
 void custom_malloc_visit_blocks(block_visitor_t visitor, void *user_data) {
+  pthread_mutex_lock(&heap_mutex);
   for (block_t *b = heap_head; b != NULL; b = b->next) {
     visitor(b->size, b->free ? 1 : 0, user_data);
   }
+  pthread_mutex_unlock(&heap_mutex);
 }
 
 void custom_malloc_reset(void) {
+  pthread_mutex_lock(&heap_mutex);
   if (heap_start) {
     void *cur = sbrk(0);
     if (cur != heap_start) {
@@ -196,4 +209,5 @@ void custom_malloc_reset(void) {
   }
   heap_head = NULL;
   heap_start = NULL;
+  pthread_mutex_unlock(&heap_mutex);
 }
